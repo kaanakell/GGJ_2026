@@ -39,6 +39,10 @@ public abstract class BaseEnemy : MonoBehaviour
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
             sr.color = new Color(0.6f, 0.6f, 1f, 1f);
         }
+        else
+        {
+            sr.color = Color.white;
+        }
     }
 
     public void StartKnockbackRecovery(float duration)

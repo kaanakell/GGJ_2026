@@ -9,44 +9,32 @@ public class TentacleMechanic : MonoBehaviour
     public DistanceJoint2D distanceJoint;
     public LineRenderer lineRenderer;
     public Camera mainCamera;
+    public ComboManager comboManager;
     #endregion
 
-    #region Swing
+    #region Settings
     [Header("Swing")]
     public LayerMask grappleableLayer;
     public float maxGrappleDistance = 15f;
     public float swingForce = 15f;
-    #endregion
 
-    #region Enemy Pull
     [Header("Enemy Pull")]
     public LayerMask enemyLayer;
     public float pullForce = 20f;
     public float releaseDistance = 1.5f;
-    #endregion
 
-    #region Whip Attack
     [Header("Whip Attack")]
+    public int baseDamage = 1;
     public float whipRange = 6f;
     public float whipCooldown = 0.25f;
     public float whipHitTiming = 0.8f;
-    #endregion
 
-    #region Whip Visual
-    [Header("Whip Visual")]
+    [Header("Visuals")]
     public int whipSegments = 14;
     public float whipExtendTime = 0.12f;
     public float whipHoldTime = 0.06f;
     public float whipCurlStrength = 22f;
     public float whipTwistFrequency = 8f;
-    #endregion
-
-    [Header("Grapple Limits")]
-    public float grappleCooldown = 0.3f;
-    private float grappleTimer = 0f;
-
-    #region Grapple Visual - NEW
-    [Header("Grapple Visual")]
     public float grappleExtendTime = 0.06f;
     #endregion
 
@@ -55,11 +43,8 @@ public class TentacleMechanic : MonoBehaviour
     float whipStartTime;
     float whipProgress;
     float impactTime;
-
     bool whipping;
     bool hitApplied;
-
-    Vector2 whipStart;
     Vector2 whipEnd;
     RaycastHit2D pendingHit;
 
@@ -69,16 +54,14 @@ public class TentacleMechanic : MonoBehaviour
     bool grappleExtending;
     float grappleExtendStartTime;
     float grappleImpactTime;
+    float grappleTimer = 0f;
+    public float grappleCooldown = 0.3f;
     #endregion
 
-    #region Unity
     void OnEnable()
     {
         ResetGrapple();
         lineRenderer.enabled = false;
-
-        grappleExtending = false;
-        grappleImpactTime = 0f;
     }
 
     void Update()
@@ -93,70 +76,41 @@ public class TentacleMechanic : MonoBehaviour
         UpdatePulling();
         UpdateSwingPhysics();
     }
-    #endregion
 
-    #region Input
     void HandleInput()
     {
-        if (grappleTimer > 0f)
-            grappleTimer -= Time.deltaTime;
+        if (grappleTimer > 0f) grappleTimer -= Time.deltaTime;
+        if (Input.GetMouseButtonDown(1)) StartGrapple();
+        if (Input.GetMouseButtonUp(1)) ResetGrapple();
 
-        if (Input.GetMouseButtonDown(1))
-            StartGrapple();
-
-        if (Input.GetMouseButtonUp(1))
-            ResetGrapple();
-
-        if (whipTimer > 0f)
-            whipTimer -= Time.deltaTime;
-
-        if (Input.GetMouseButtonDown(0) && whipTimer <= 0f)
-            StartWhipAttack();
+        if (whipTimer > 0f) whipTimer -= Time.deltaTime;
+        if (Input.GetMouseButtonDown(0) && whipTimer <= 0f) StartWhipAttack();
 
         if (distanceJoint.enabled)
         {
-            if (Input.GetKey(KeyCode.W))
-                distanceJoint.distance -= Time.deltaTime * 6f;
-
-            if (Input.GetKey(KeyCode.S))
-                distanceJoint.distance += Time.deltaTime * 6f;
-
+            if (Input.GetKey(KeyCode.W)) distanceJoint.distance -= Time.deltaTime * 6f;
+            if (Input.GetKey(KeyCode.S)) distanceJoint.distance += Time.deltaTime * 6f;
             distanceJoint.distance = Mathf.Clamp(distanceJoint.distance, 1f, maxGrappleDistance);
         }
     }
-    #endregion
 
-    #region Grapple
     void StartGrapple()
     {
+        if (grappleTimer > 0f) return;
         Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dir = (mousePos - (Vector2)transform.position).normalized;
 
-        if (grappleTimer > 0f) return;
-
-        RaycastHit2D hit = Physics2D.Raycast(
-            transform.position,
-            dir,
-            maxGrappleDistance,
-            grappleableLayer | enemyLayer
-        );
-
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, dir, maxGrappleDistance, grappleableLayer | enemyLayer);
         if (!hit) return;
 
         lineRenderer.enabled = true;
         lineRenderer.positionCount = whipSegments;
-
-        grappleExtending = true;
-        grappleExtendStartTime = Time.time;
-        grappleImpactTime = 0f;
 
         if (((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
         {
             enemyTarget = hit.collider.attachedRigidbody;
             pullingEnemy = true;
             playerController.IsSwinging = false;
-
-            grappleExtending = false;
             grappleImpactTime = Time.time;
         }
         else
@@ -166,8 +120,9 @@ public class TentacleMechanic : MonoBehaviour
             distanceJoint.distance = Vector2.Distance(transform.position, grapplePoint);
             distanceJoint.enabled = true;
             playerController.IsSwinging = true;
+            grappleExtending = true;
+            grappleExtendStartTime = Time.time;
         }
-
         grappleTimer = grappleCooldown;
     }
 
@@ -175,23 +130,18 @@ public class TentacleMechanic : MonoBehaviour
     {
         pullingEnemy = false;
         enemyTarget = null;
-
         distanceJoint.enabled = false;
         playerController.IsSwinging = false;
-
         grappleExtending = false;
-
-        if (!whipping)
-            lineRenderer.enabled = false;
+        if (!whipping) lineRenderer.enabled = false;
+        playerRb.linearDamping = 0f;
     }
 
     void UpdatePulling()
     {
         if (!pullingEnemy || enemyTarget == null) return;
-
         Vector2 dir = ((Vector2)transform.position - enemyTarget.position).normalized;
         enemyTarget.linearVelocity = dir * pullForce;
-
         if (Vector2.Distance(transform.position, enemyTarget.position) < releaseDistance)
             ResetGrapple();
     }
@@ -199,35 +149,32 @@ public class TentacleMechanic : MonoBehaviour
     void UpdateSwingPhysics()
     {
         if (!distanceJoint.enabled) return;
+        float input = Input.GetAxisRaw("Horizontal");
+        if (input == 0f) return;
 
-        float h = Input.GetAxisRaw("Horizontal");
-        if (h == 0f) return;
+        Vector2 toAnchor = (grapplePoint - (Vector2)transform.position).normalized;
+        Vector2 tangent = new Vector2(-toAnchor.y, toAnchor.x);
+        float tangentialSpeed = Vector2.Dot(playerRb.linearVelocity, tangent);
 
-        Vector2 dir = (grapplePoint - (Vector2)transform.position).normalized;
-        Vector2 perp = new Vector2(-dir.y, dir.x);
-        playerRb.AddForce(perp * h * swingForce);
+        if (Mathf.Sign(tangentialSpeed) != Mathf.Sign(input)) return;
+
+        playerRb.linearDamping = 0.5f;
+        float speedFactor = Mathf.Clamp01(Mathf.Abs(tangentialSpeed) / 10f);
+        playerRb.AddForce(tangent * swingForce * (0.6f + speedFactor) * Mathf.Sign(input), ForceMode2D.Force);
     }
-    #endregion
 
-    #region Whip
     void StartWhipAttack()
     {
         whipTimer = whipCooldown;
-
         Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dir = (mousePos - (Vector2)transform.position).normalized;
-
         pendingHit = Physics2D.Raycast(transform.position, dir, whipRange, enemyLayer);
-
-        whipStart = transform.position;
-        whipEnd = whipStart + dir * whipRange;
-
+        whipEnd = (Vector2)transform.position + dir * whipRange;
         whipStartTime = Time.time;
         impactTime = 0f;
         whipProgress = 0f;
         hitApplied = false;
         whipping = true;
-
         lineRenderer.enabled = true;
         lineRenderer.positionCount = whipSegments;
     }
@@ -235,7 +182,6 @@ public class TentacleMechanic : MonoBehaviour
     void UpdateWhip()
     {
         if (!whipping) return;
-
         float elapsed = Time.time - whipStartTime;
         whipProgress = Mathf.Clamp01(elapsed / whipExtendTime);
 
@@ -246,112 +192,73 @@ public class TentacleMechanic : MonoBehaviour
         }
 
         float timeSource = whipProgress < 1f ? Time.time : impactTime;
+        SetTentaclePositions(transform.position, whipEnd, whipProgress, timeSource, whipCurlStrength, whipTwistFrequency);
 
-        SetTentaclePositions(whipStart, whipEnd, whipProgress, timeSource, whipCurlStrength, whipTwistFrequency);
-
-        if (whipProgress >= 1f && impactTime == 0f)
-            impactTime = Time.time;
-
+        if (whipProgress >= 1f && impactTime == 0f) impactTime = Time.time;
         if (impactTime > 0f && Time.time - impactTime >= whipHoldTime)
         {
             whipping = false;
-            if (!distanceJoint.enabled && !pullingEnemy)
-                lineRenderer.enabled = false;
+            if (!distanceJoint.enabled && !pullingEnemy) lineRenderer.enabled = false;
         }
     }
 
     void ApplyWhipHit()
     {
         if (!pendingHit) return;
-
         EnemyHealth hurt = pendingHit.collider.GetComponent<EnemyHealth>();
         BaseEnemy baseEnemy = pendingHit.collider.GetComponent<BaseEnemy>();
-
         if (hurt == null) return;
 
-        Vector2 dir = (pendingHit.collider.transform.position - transform.position).normalized;
+        float mult = comboManager != null ? comboManager.GetDamageMultiplier(DamageType.Tentacle) : 1f;
+        int finalDamage = Mathf.CeilToInt(baseDamage * mult);
 
-        hurt.TakeDamage(1, Vector2.zero);
+        Debug.Log($"<color=cyan>Tentacle Hit!</color> Base: {baseDamage} x Combo: {mult} = <b>Final: {finalDamage}</b>");
+
+        hurt.TakeDamage(finalDamage, Vector2.zero, DamageType.Tentacle);
+        if (comboManager != null) comboManager.RegisterHit(DamageType.Tentacle);
 
         if (baseEnemy != null)
         {
             baseEnemy.ApplyStun(1.2f);
             HitStop.Freeze(0.075f);
         }
-
-        CameraImpulseManager.Instance.PlayImpulse(dir, CameraImpulsePresets.TentacleHit);
+        CameraImpulseManager.Instance.PlayImpulse((pendingHit.point - (Vector2)transform.position).normalized, CameraImpulsePresets.TentacleHit);
     }
 
-    #endregion
-
-    #region Shared Tentacle Visual - NEW
     void UpdateGrappleTentacle()
     {
         if (whipping) return;
-
-        bool isActive = distanceJoint.enabled || (pullingEnemy && enemyTarget != null);
-        if (!isActive || !lineRenderer.enabled) return;
+        if (!(distanceJoint.enabled || (pullingEnemy && enemyTarget != null)) || !lineRenderer.enabled) return;
 
         Vector2 startPos = transform.position;
-        Vector2 endPos = pullingEnemy && enemyTarget != null ? enemyTarget.position : grapplePoint;
-
+        Vector2 endPos = pullingEnemy ? enemyTarget.position : grapplePoint;
         float prog = 1f;
-        float timeSource;
 
         if (grappleExtending)
         {
-            float elapsed = Time.time - grappleExtendStartTime;
-            prog = Mathf.Clamp01(elapsed / grappleExtendTime);
-
-            timeSource = Time.time;
-
-            if (prog >= 1f)
-            {
-                grappleExtending = false;
-                grappleImpactTime = Time.time;
-            }
-        }
-        else
-        {
-            timeSource = grappleImpactTime;
+            prog = Mathf.Clamp01((Time.time - grappleExtendStartTime) / grappleExtendTime);
+            if (prog >= 1f) { grappleExtending = false; grappleImpactTime = Time.time; }
         }
 
-        SetTentaclePositions(startPos, endPos, prog, timeSource, whipCurlStrength, whipTwistFrequency);
+        SetTentaclePositions(startPos, endPos, prog, grappleExtending ? Time.time : grappleImpactTime, whipCurlStrength, whipTwistFrequency);
     }
 
     private void SetTentaclePositions(Vector2 start, Vector2 end, float progress, float timeSource, float curlStrength, float twistFrequency)
     {
-        if (progress <= 0f)
-        {
-            for (int i = 0; i < whipSegments; i++)
-                lineRenderer.SetPosition(i, start);
-            return;
-        }
-
         Vector2 dir = (end - start).normalized;
-        float fullLength = Vector2.Distance(start, end);
-        float currentLength = fullLength * progress;
-
+        float currentLength = Vector2.Distance(start, end) * progress;
         float segmentLength = currentLength / (whipSegments - 1);
-
         Vector2 prev = start;
+
         for (int i = 0; i < whipSegments; i++)
         {
             float t = i / (float)(whipSegments - 1);
-
             float phase = timeSource * twistFrequency - t * 6f;
-            float curl = Mathf.Sin(phase) * curlStrength * (1f - t);
-            float rad = curl * Mathf.Deg2Rad;
-
-            Vector2 segDir = new Vector2(
-                dir.x * Mathf.Cos(rad) - dir.y * Mathf.Sin(rad),
-                dir.x * Mathf.Sin(rad) + dir.y * Mathf.Cos(rad)
-            );
-
+            float rad = Mathf.Sin(phase) * curlStrength * (1f - t) * Mathf.Deg2Rad;
+            Vector2 segDir = new Vector2(dir.x * Mathf.Cos(rad) - dir.y * Mathf.Sin(rad), dir.x * Mathf.Sin(rad) + dir.y * Mathf.Cos(rad));
             Vector2 pos = prev + segDir * segmentLength;
             lineRenderer.SetPosition(i, pos);
             prev = pos;
         }
     }
-    #endregion
 }

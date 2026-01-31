@@ -25,7 +25,8 @@ public class PlayerController : MonoBehaviour
     public bool IsSwinging { get; set; } = false;
     public bool IsGrounded { get; set; } = true;
     public bool BlockHorizontalInput { get; set; }
-
+    public bool FacingRight { get; private set; } = true;
+    public bool HasAirJump { get; private set; }
 
     void Awake()
     {
@@ -49,21 +50,42 @@ public class PlayerController : MonoBehaviour
         if (IsGrounded)
         {
             coyoteCounter = coyoteTime;
+            HasAirJump = false;
         }
         else
         {
             coyoteCounter -= Time.deltaTime;
         }
 
-        if (jumpBufferCounter > 0f && coyoteCounter > 0f && !IsSwinging)
+        if (jumpBufferCounter > 0f)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpForce);
-            jumpBufferCounter = 0f;
+            if ((coyoteCounter > 0f && !IsSwinging) || HasAirJump)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpForce);
+
+                jumpBufferCounter = 0f;
+                coyoteCounter = 0f;
+                HasAirJump = false;
+            }
         }
 
-        if (horizontalInput > 0) transform.localScale = new Vector3(1, 1, 1);
-        else if (horizontalInput < 0) transform.localScale = new Vector3(-1, 1, 1);
+        if (horizontalInput > 0)
+        {
+            FacingRight = true;
+            transform.localScale = new Vector3(1, 1, 1);
+        }
+        else if (horizontalInput < 0)
+        {
+            FacingRight = false;
+            transform.localScale = new Vector3(-1, 1, 1);
+        }
     }
+
+    public void EnableAirJump()
+    {
+        HasAirJump = true;
+    }
+
 
     void FixedUpdate()
     {

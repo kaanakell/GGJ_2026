@@ -2,18 +2,23 @@ using UnityEngine;
 
 public class RangedEnemy : BaseEnemy
 {
-    [Header("Ranged Settings")]
-    public bool isStationary = true;
+    [Header("Ranged Strategy")]
     public GameObject projectilePrefab;
     public float shootCooldown = 2f;
-    public float minShootDistance = 2f;
+    public float minShootDistance = 3f;
     public float maxShootDistance = 12f;
+    public float runAwayDistance = 2.5f;
     public float moveSpeed = 3f;
-    public int projectileDamage = 1;
+
+    [Header("Melee Defense (Body Push)")]
+    public float meleeDefenseDistance = 1.2f;
+    public float pushForce = 10f;
+    public float pushCooldown = 1.5f;
 
     private float shootTimer;
+    private float pushTimer;
 
-    private enum State { Patrol, MaintainDistance, Shoot }
+    private enum State { Patrol, Reposition, Shoot, MeleeDefense }
     private State currentState = State.Patrol;
 
     protected override void Start()
@@ -33,21 +38,30 @@ public class RangedEnemy : BaseEnemy
             return;
         }
 
+        if (pushTimer > 0) pushTimer -= Time.deltaTime;
+
         bool playerDetected = PlayerInDetectionRange();
 
         if (playerDetected)
         {
             FacePlayer();
+            float dist = Vector2.Distance(transform.position, player.position);
 
-            float distToPlayer = Vector2.Distance(transform.position, player.position);
-
-            if (distToPlayer >= minShootDistance && distToPlayer <= maxShootDistance)
+            if (dist <= meleeDefenseDistance && pushTimer <= 0)
+            {
+                currentState = State.MeleeDefense;
+            }
+            else if (dist < runAwayDistance)
+            {
+                currentState = State.Reposition;
+            }
+            else if (dist <= maxShootDistance)
             {
                 currentState = State.Shoot;
             }
             else
             {
-                currentState = State.MaintainDistance;
+                currentState = State.Patrol;
             }
         }
         else
@@ -55,38 +69,61 @@ public class RangedEnemy : BaseEnemy
             currentState = State.Patrol;
         }
 
+        ExecuteState();
+    }
+
+    void ExecuteState()
+    {
         switch (currentState)
         {
             case State.Patrol:
-                if (patrols && !isStationary)
-                    Patrol();
-                else
-                    rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+                if (patrols) Patrol();
                 break;
 
-            case State.MaintainDistance:
-                if (!isStationary)
-                {
-                    Vector2 dir;
-                    if (Vector2.Distance(transform.position, player.position) < minShootDistance)
-                        dir = (transform.position - player.position).normalized;
-                    else
-                        dir = (player.position - transform.position).normalized;
-
-                    rb.linearVelocity = new Vector2(dir.x * moveSpeed, rb.linearVelocity.y);
-                }
+            case State.Reposition:
+                Vector2 runDir = (transform.position - player.position).normalized;
+                rb.linearVelocity = new Vector2(runDir.x * moveSpeed, rb.linearVelocity.y);
                 break;
 
             case State.Shoot:
                 rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-
                 if (Time.time >= shootTimer)
                 {
                     Shoot();
                     shootTimer = Time.time + shootCooldown;
                 }
                 break;
+
+            case State.MeleeDefense:
+                rb.linearVelocity = Vector2.zero;
+                PerformBodyPush();
+                break;
         }
+    }
+
+    private void PerformBodyPush()
+    {
+        // Visual cue (animation trigger would go here)
+        Collider2D hit = Physics2D.OverlapCircle(transform.position, meleeDefenseDistance, LayerMask.GetMask("Player"));
+
+        if (hit)
+        {
+            PlayerHealth ph = hit.GetComponent<PlayerHealth>();
+            if (ph)
+            {
+                Vector2 pushDir = (hit.transform.position - transform.position).normalized;
+                ph.TakeDamage(1, pushDir * pushForce);
+            }
+        }
+
+        pushTimer = pushCooldown;
+        currentState = State.Reposition;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, meleeDefenseDistance);
     }
 
     private void Shoot()

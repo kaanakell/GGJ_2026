@@ -12,6 +12,7 @@ public class MaskManager : MonoBehaviour
 
     public enum MaskType { Tentacle, Claw }
     public MaskType currentMask;
+    public UIManager uiManager;
 
     public MaskType CurrentMask => currentMask;
 
@@ -43,6 +44,8 @@ public class MaskManager : MonoBehaviour
     private void EquipMask(MaskType mask)
     {
         currentMask = mask;
+
+        if (uiManager != null) uiManager.UpdateMaskIcon(mask);
 
         if (mask == MaskType.Tentacle)
         {
