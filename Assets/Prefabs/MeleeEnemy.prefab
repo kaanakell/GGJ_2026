@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1917265022328742734}
   - component: {fileID: 6075369538406754427}
-  - component: {fileID: 5683463092586109140}
   - component: {fileID: 6035992302639114359}
   - component: {fileID: 6492978980577290132}
   - component: {fileID: 3885995680448318177}
+  - component: {fileID: 2267327147686998907}
   m_Layer: 6
   m_Name: MeleeEnemy
   m_TagString: Enemy
@@ -83,10 +83,10 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
-  m_Color: {r: 0.21855354, g: 1, b: 0, a: 1}
+  m_Sprite: {fileID: 21300000, guid: eecc0ec23ca564c468b7686a54db9b0c, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -95,8 +95,87 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!60 &5683463092586109140
-PolygonCollider2D:
+--- !u!50 &6035992302639114359
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4353747831394603866}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 5
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 1
+  m_Constraints: 4
+--- !u!114 &6492978980577290132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4353747831394603866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24c87b5ce8269464ca546dc97e47b664, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DummyHurt
+  maxHealth: 20
+  currentHealth: 0
+  weakness: 1
+  resistance: 0
+  flashDuration: 0.1
+  deathSounds:
+  - {fileID: 8300000, guid: a4eaab57a4f85c34eb5c6f0991ab1009, type: 3}
+  - {fileID: 8300000, guid: 5ae641e815cada04f911729baeaabcd3, type: 3}
+  deathBurstPrefab: {fileID: 6482914972341966036, guid: 0ef40d6264589d342a9fef0444f003dc, type: 3}
+--- !u!114 &3885995680448318177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4353747831394603866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53a25b005327fc64ebea1ffea429365b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeEnemy
+  detectionRange: 5
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  hasTouchDamage: 1
+  touchDamageAmount: 1
+  patrols: 1
+  patrolSpeed: 2
+  edgeCheckDistance: 1
+  wallCheckDistance: 1
+  patrolRayOffset: {x: 0.5, y: 0}
+  isStationary: 0
+  chaseSpeed: 1.5
+  attackRange: 1.5
+  attackCooldown: 1.2
+  damageToPlayer: 4
+--- !u!70 &2267327147686998907
+CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -130,86 +209,5 @@ PolygonCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.28866667}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: 0, y: 0.5773587}
-      - {x: -0.5, y: -0.28866667}
-      - {x: 0.5, y: -0.28866667}
-  m_UseDelaunayMesh: 1
---- !u!50 &6035992302639114359
-Rigidbody2D:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4353747831394603866}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 1
-  m_Constraints: 4
---- !u!114 &6492978980577290132
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4353747831394603866}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24c87b5ce8269464ca546dc97e47b664, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DummyHurt
-  maxHealth: 3
-  knockbackForce: 25
---- !u!114 &3885995680448318177
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4353747831394603866}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 53a25b005327fc64ebea1ffea429365b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MeleeEnemy
-  detectionRange: 10
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  hasTouchDamage: 1
-  touchDamageAmount: 1
-  patrols: 1
-  patrolSpeed: 2
-  edgeCheckDistance: 0.3
-  wallCheckDistance: 0.5
-  isStationary: 0
-  chaseSpeed: 4
-  attackRange: 1.8
-  attackCooldown: 1.2
-  damageToPlayer: 1
+  m_Size: {x: 0.8650284, y: 0.9998932}
+  m_Direction: 0

@@ -29,6 +29,8 @@ public class RangedEnemy : BaseEnemy
 
     void Update()
     {
+        base.Update();
+
         HandleStun();
         if (stunDuration > 0f) return;
 
@@ -81,8 +83,8 @@ public class RangedEnemy : BaseEnemy
                 break;
 
             case State.Reposition:
-                Vector2 runDir = (transform.position - player.position).normalized;
-                rb.linearVelocity = new Vector2(runDir.x * moveSpeed, rb.linearVelocity.y);
+                float moveDir = (transform.position.x > player.position.x) ? 1 : -1;
+                rb.linearVelocity = new Vector2(moveDir * moveSpeed, rb.linearVelocity.y);
                 break;
 
             case State.Shoot:
@@ -103,7 +105,6 @@ public class RangedEnemy : BaseEnemy
 
     private void PerformBodyPush()
     {
-        // Visual cue (animation trigger would go here)
         Collider2D hit = Physics2D.OverlapCircle(transform.position, meleeDefenseDistance, LayerMask.GetMask("Player"));
 
         if (hit)
@@ -113,6 +114,7 @@ public class RangedEnemy : BaseEnemy
             {
                 Vector2 pushDir = (hit.transform.position - transform.position).normalized;
                 ph.TakeDamage(1, pushDir * pushForce);
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.soundLibrary.rangedMeleeDefend, 0.85f);
             }
         }
 
@@ -131,5 +133,6 @@ public class RangedEnemy : BaseEnemy
         Vector2 shootDir = (player.position - transform.position).normalized;
         GameObject proj = Instantiate(projectilePrefab, transform.position + (Vector3)(shootDir * 0.5f), Quaternion.identity);
         proj.GetComponent<Projectile>().Initialize(shootDir);
+        AudioManager.Instance.PlaySFX(AudioManager.Instance.soundLibrary.rangedShoot, 0.8f);
     }
 }

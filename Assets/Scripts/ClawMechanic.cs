@@ -9,6 +9,7 @@ public class ClawMechanic : MonoBehaviour
     public ComboManager comboManager;
     public LayerMask wallLayer;
     public LayerMask enemyLayer;
+    public SlashVFX slashVFX;
 
     [Header("Combat Stats")]
     public int baseDamage = 1;
@@ -29,6 +30,13 @@ public class ClawMechanic : MonoBehaviour
     public float wallJumpForceY = 16f;
     public float wallCheckDistance = 0.55f;
     public float wallJumpLockTime = 0.15f;
+
+    [Header("Wall Check")]
+    public Vector2 wallCheckOffset = new Vector2(0.4f, 0f);
+
+    [Header("VFX")]
+    public Transform slashSpawnPoint;
+    public GameObject hitSparkPrefab;
 
     private int wallDir;
     private float wallJumpLockCounter;
@@ -57,16 +65,39 @@ public class ClawMechanic : MonoBehaviour
 
     private void HandleWallDetection()
     {
-        RaycastHit2D leftHit = Physics2D.Raycast(transform.position, Vector2.left, wallCheckDistance, wallLayer);
-        RaycastHit2D rightHit = Physics2D.Raycast(transform.position, Vector2.right, wallCheckDistance, wallLayer);
+        int facingSign = playerController.FacingRight ? 1 : -1;
 
-        bool touchingLeftWall = leftHit.collider != null;
-        bool touchingRightWall = rightHit.collider != null;
-        isTouchingWall = touchingLeftWall || touchingRightWall;
+        Vector2 origin = (Vector2)transform.position +
+                         new Vector2(wallCheckOffset.x * facingSign, wallCheckOffset.y);
 
-        if (touchingLeftWall) wallDir = 1;
-        else if (touchingRightWall) wallDir = -1;
+        Vector2 checkDir = Vector2.right * facingSign;
+
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            checkDir,
+            wallCheckDistance,
+            wallLayer
+        );
+
+        isTouchingWall = hit.collider != null;
+
+        if (isTouchingWall)
+        {
+            wallDir = -facingSign;
+        }
+        else
+        {
+            wallDir = 0;
+        }
+
+        Debug.DrawRay(
+            origin,
+            checkDir * wallCheckDistance,
+            isTouchingWall ? Color.green : Color.red
+        );
     }
+
+
 
     private void HandleWallMovement()
     {
@@ -122,6 +153,17 @@ public class ClawMechanic : MonoBehaviour
         if (slashTimer > 0f) return;
 
         Vector2 dir = GetSlashDirection();
+
+        if (slashVFX != null)
+        {
+            SlashVFX vfx = Instantiate(slashVFX);
+            Vector2 spawnPos = slashSpawnPoint != null
+                ? slashSpawnPoint.position
+                : transform.position;
+
+            vfx.Play(spawnPos, dir);
+        }
+
         Vector2 boxSize = (dir == Vector2.up || dir == Vector2.down) ? slashUpBoxSize : slashBoxSize;
         float reach = (dir == Vector2.up || dir == Vector2.down) ? boxSize.y : boxSize.x;
         Vector2 boxCenter = (Vector2)transform.position + dir * (reach * 0.6f);
@@ -134,15 +176,26 @@ public class ClawMechanic : MonoBehaviour
             EnemyHealth enemy = col.GetComponent<EnemyHealth>();
             if (enemy == null) continue;
 
-            float multiplier = comboManager != null ? comboManager.GetDamageMultiplier(DamageType.Claw) : 1f;
-            int finalDamage = Mathf.CeilToInt(baseDamage * multiplier);
+            Vector2 sparkPos = col.ClosestPoint(transform.position);
 
-            Debug.Log($"<color=orange>Claw Slash!</color> Base: {baseDamage} x Combo: {multiplier} = <b>Final: {finalDamage}</b>");
+            if (hitSparkPrefab != null)
+            {
+                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+                Instantiate(hitSparkPrefab, sparkPos, Quaternion.Euler(0, 0, angle));
+            }
+
+            float multiplier = comboManager != null
+                ? comboManager.GetDamageMultiplier(DamageType.Claw)
+                : 1f;
+
+            int finalDamage = Mathf.CeilToInt(baseDamage * multiplier);
 
             Vector2 knockback = (dir * 12f) + Vector2.up * 4f;
             enemy.TakeDamage(finalDamage, knockback, DamageType.Claw);
 
-            if (comboManager != null) comboManager.RegisterHit(DamageType.Claw);
+            if (comboManager != null)
+                comboManager.RegisterHit(DamageType.Claw);
+
             hitSomething = true;
         }
 
@@ -153,9 +206,14 @@ public class ClawMechanic : MonoBehaviour
             playerController.EnableAirJump();
         }
 
+        AudioManager.Instance.PlayRandomSFX(
+            AudioManager.Instance.soundLibrary.clawSlash,
+            0.9f
+        );
+
         if (hitSomething)
         {
-            HitStop.Freeze((dir == Vector2.down) ? 0.07f : 0.05f);
+            HitStop.Freeze(dir == Vector2.down ? 0.07f : 0.05f);
             CameraImpulseManager.Instance.PlayImpulse(dir, CameraImpulsePresets.ClawHit);
         }
 

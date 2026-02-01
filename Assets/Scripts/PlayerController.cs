@@ -28,6 +28,7 @@ public class PlayerController : MonoBehaviour
     public bool FacingRight { get; private set; } = true;
     public bool HasAirJump { get; private set; }
 
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -39,6 +40,11 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetButtonDown("Jump"))
         {
+            AudioManager.Instance.PlaySFX(
+                AudioManager.Instance.soundLibrary.jump,
+                1f
+            );
+
             jumpBufferCounter = jumpBufferTime;
         }
         else
@@ -69,12 +75,12 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (horizontalInput > 0)
+        if (horizontalInput > 0f)
         {
             FacingRight = true;
             transform.localScale = new Vector3(1, 1, 1);
         }
-        else if (horizontalInput < 0)
+        else if (horizontalInput < 0f)
         {
             FacingRight = false;
             transform.localScale = new Vector3(-1, 1, 1);

@@ -38,6 +38,9 @@ public class TentacleMechanic : MonoBehaviour
     public float grappleExtendTime = 0.06f;
     #endregion
 
+    [Header("VFX")]
+    public GameObject hitSparkPrefab;
+
     #region Internal State
     float whipTimer;
     float whipStartTime;
@@ -56,6 +59,9 @@ public class TentacleMechanic : MonoBehaviour
     float grappleImpactTime;
     float grappleTimer = 0f;
     public float grappleCooldown = 0.3f;
+    bool swingSoundPlaying;
+
+
     #endregion
 
     void OnEnable()
@@ -119,10 +125,22 @@ public class TentacleMechanic : MonoBehaviour
             distanceJoint.connectedAnchor = grapplePoint;
             distanceJoint.distance = Vector2.Distance(transform.position, grapplePoint);
             distanceJoint.enabled = true;
+
             playerController.IsSwinging = true;
             grappleExtending = true;
             grappleExtendStartTime = Time.time;
+
+            if (!swingSoundPlaying)
+            {
+                AudioManager.Instance.PlaySFX(
+                    AudioManager.Instance.soundLibrary.tentacleSlide,
+                    0.6f,
+                    0.1f
+                );
+                swingSoundPlaying = true;
+            }
         }
+
         grappleTimer = grappleCooldown;
     }
 
@@ -133,6 +151,9 @@ public class TentacleMechanic : MonoBehaviour
         distanceJoint.enabled = false;
         playerController.IsSwinging = false;
         grappleExtending = false;
+
+        swingSoundPlaying = false;
+
         if (!whipping) lineRenderer.enabled = false;
         playerRb.linearDamping = 0f;
     }
@@ -165,6 +186,7 @@ public class TentacleMechanic : MonoBehaviour
 
     void StartWhipAttack()
     {
+        AudioManager.Instance.PlaySFX(AudioManager.Instance.soundLibrary.tentacleWhip, 0.85f);
         whipTimer = whipCooldown;
         Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dir = (mousePos - (Vector2)transform.position).normalized;
@@ -209,12 +231,22 @@ public class TentacleMechanic : MonoBehaviour
         BaseEnemy baseEnemy = pendingHit.collider.GetComponent<BaseEnemy>();
         if (hurt == null) return;
 
+        if (hitSparkPrefab != null)
+        {
+            Vector2 impactDir = (pendingHit.point - (Vector2)transform.position).normalized;
+            float angle = Mathf.Atan2(impactDir.y, impactDir.x) * Mathf.Rad2Deg;
+
+            Instantiate(hitSparkPrefab, pendingHit.point, Quaternion.Euler(0, 0, angle));
+        }
+
         float mult = comboManager != null ? comboManager.GetDamageMultiplier(DamageType.Tentacle) : 1f;
         int finalDamage = Mathf.CeilToInt(baseDamage * mult);
 
         Debug.Log($"<color=cyan>Tentacle Hit!</color> Base: {baseDamage} x Combo: {mult} = <b>Final: {finalDamage}</b>");
 
-        hurt.TakeDamage(finalDamage, Vector2.zero, DamageType.Tentacle);
+        Vector2 knockbackDir = (pendingHit.point - (Vector2)transform.position).normalized;
+        hurt.TakeDamage(finalDamage, knockbackDir * 5f, DamageType.Tentacle);
+
         if (comboManager != null) comboManager.RegisterHit(DamageType.Tentacle);
 
         if (baseEnemy != null)
@@ -222,7 +254,8 @@ public class TentacleMechanic : MonoBehaviour
             baseEnemy.ApplyStun(1.2f);
             HitStop.Freeze(0.075f);
         }
-        CameraImpulseManager.Instance.PlayImpulse((pendingHit.point - (Vector2)transform.position).normalized, CameraImpulsePresets.TentacleHit);
+
+        CameraImpulseManager.Instance.PlayImpulse(knockbackDir, CameraImpulsePresets.TentacleHit);
     }
 
     void UpdateGrappleTentacle()

@@ -7,6 +7,7 @@ public class EnemyHealth : MonoBehaviour
     public int maxHealth = 3;
     [SerializeField]
     private int currentHealth;
+    private bool isDead = false;
 
     [Header("Resistances & Weaknesses")]
     public DamageType weakness = DamageType.Claw;
@@ -17,6 +18,11 @@ public class EnemyHealth : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Rigidbody2D rb;
     private Color originalColor;
+    [Header("Audio")]
+    public AudioClip[] deathSounds;
+
+    [Header("VFX Prefabs")]
+    public GameObject deathBurstPrefab;
 
     void Awake()
     {
@@ -81,7 +87,19 @@ public class EnemyHealth : MonoBehaviour
 
     private void Die()
     {
-        // Add particles here later
+        if (isDead) return;
+        isDead = true;
+
+        if (deathBurstPrefab != null)
+        {
+            Instantiate(deathBurstPrefab, transform.position, Quaternion.identity);
+        }
+
+        if (deathSounds != null && deathSounds.Length > 0)
+        {
+            AudioManager.Instance.PlayRandomSFX(deathSounds, 0.9f);
+        }
+
         Destroy(gameObject);
     }
 }

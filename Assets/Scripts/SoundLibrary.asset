@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03022fbfa0a71be479852666cfa82333, type: 3}
+  m_Name: SoundLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::SoundLibrary
+  clawSlash:
+  - {fileID: 8300000, guid: 207996ec56e6d4a4aa57aed825dba0c8, type: 3}
+  - {fileID: 8300000, guid: bcce49b29613ef34580ea48673be5d4c, type: 3}
+  jump: {fileID: 8300000, guid: 60ae32f8a39092f4792e61194cae8ed1, type: 3}
+  hurt: {fileID: 8300000, guid: 3b3d65448bd7ec3478b389430ba1bb6e, type: 3}
+  maskChange: {fileID: 8300000, guid: 01565c17acd3f404f823b4720a671814, type: 3}
+  gameOver: {fileID: 8300000, guid: 682e76344c8ae3640b19be35592239c7, type: 3}
+  tentacleSlide: {fileID: 8300000, guid: 15f07de0070fca841bb80b4ca61dff42, type: 3}
+  tentacleWhip: {fileID: 8300000, guid: a823bf4a562cb3d4cb99833c2a8afb73, type: 3}
+  meleeAttack: {fileID: 8300000, guid: 119a669a42d7a2541bb7eb0b83ed307e, type: 3}
+  meleeDeath:
+  - {fileID: 8300000, guid: a4eaab57a4f85c34eb5c6f0991ab1009, type: 3}
+  - {fileID: 8300000, guid: 5ae641e815cada04f911729baeaabcd3, type: 3}
+  rangedShoot: {fileID: 8300000, guid: 18f1dec55c0737240b4f1b853af9eefb, type: 3}
+  rangedMeleeDefend: {fileID: 8300000, guid: c5e73c8e08743f645bbc8a2acff3f58c, type: 3}
+  rangedDeath:
+  - {fileID: 8300000, guid: 4742a53a11933f542a326940c69090f7, type: 3}
+  - {fileID: 8300000, guid: 18b67c923162fc340baf9d7df013281d, type: 3}
+  menuMusic: {fileID: 8300000, guid: d56297b434b6d2c46a1dd1047da265e6, type: 3}
+  gameplayMusic: {fileID: 8300000, guid: 46501673a3463dc40a0cc3947b078cde, type: 3}

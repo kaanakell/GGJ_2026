@@ -38,7 +38,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _DitherStrength: 0.05
-    - _Steps: 32
+    - _Steps: 16
     m_Colors:
     - _SnapResolution: {r: 320, g: 240, b: 0, a: 0}
   m_BuildTextureStacks: []

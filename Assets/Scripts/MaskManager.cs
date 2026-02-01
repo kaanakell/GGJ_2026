@@ -13,6 +13,7 @@ public class MaskManager : MonoBehaviour
     public enum MaskType { Tentacle, Claw }
     public MaskType currentMask;
     public UIManager uiManager;
+    public Animator playerAnimator;
 
     public MaskType CurrentMask => currentMask;
 
@@ -45,7 +46,11 @@ public class MaskManager : MonoBehaviour
     {
         currentMask = mask;
 
-        if (uiManager != null) uiManager.UpdateMaskIcon(mask);
+        if (uiManager != null)
+            uiManager.UpdateMaskIcon(mask);
+
+        if (playerAnimator != null)
+            playerAnimator.SetInteger("Mask", mask == MaskType.Tentacle ? 0 : 1);
 
         if (mask == MaskType.Tentacle)
         {
@@ -58,9 +63,13 @@ public class MaskManager : MonoBehaviour
                 clawMechanic.enabled = false;
             }
 
-            if (tentacleMechanic != null) tentacleMechanic.enabled = true;
+            if (tentacleMechanic != null)
+                tentacleMechanic.enabled = true;
 
-            // Optional: Sound effect / animation for tentacle equip
+            AudioManager.Instance.PlaySFX(
+                AudioManager.Instance.soundLibrary.maskChange,
+                0.6f
+            );
         }
         else
         {
@@ -73,9 +82,13 @@ public class MaskManager : MonoBehaviour
                 tentacleMechanic.enabled = false;
             }
 
-            if (clawMechanic != null) clawMechanic.enabled = true;
+            if (clawMechanic != null)
+                clawMechanic.enabled = true;
 
-            // Optional: Sound effect / animation for claw equip
+            AudioManager.Instance.PlaySFX(
+                AudioManager.Instance.soundLibrary.maskChange,
+                0.6f
+            );
         }
     }
 }

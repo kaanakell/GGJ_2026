@@ -21,6 +21,9 @@ public class PlayerHealth : MonoBehaviour
     private int originalLayer;
     private int enemyLayerIndex;
 
+    [Header("VFX")]
+    public GameObject deathBurstPrefab;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -66,6 +69,11 @@ public class PlayerHealth : MonoBehaviour
 
         HitStop.Freeze(0.06f);
 
+        AudioManager.Instance.PlaySFX(
+            AudioManager.Instance.soundLibrary.hurt,
+            1f
+        );
+
         if (knockbackDir.sqrMagnitude > 0.01f)
         {
             rb.linearVelocity = Vector2.zero;
@@ -93,8 +101,17 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
-        // TODO: Death animation, respawn, game over
+        AudioManager.Instance.PlaySFX(AudioManager.Instance.soundLibrary.gameOver, 1f);
+        AudioManager.Instance.StopMusic();
+
+        if (deathBurstPrefab != null)
+        {
+            Instantiate(deathBurstPrefab, transform.position, Quaternion.identity);
+        }
+
         Debug.Log("Player Died");
+        GameStateManager.Instance.SetState(GameState.PlayerDead);
+        UIManager.Instance.ShowGameOver();
         gameObject.SetActive(false);
     }
 

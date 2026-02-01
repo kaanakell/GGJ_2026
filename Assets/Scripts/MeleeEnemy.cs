@@ -14,6 +14,7 @@ public class MeleeEnemy : BaseEnemy
     private enum State { Patrol, Chase, Attack }
     private State currentState = State.Patrol;
 
+
     protected override void Start()
     {
         base.Start();
@@ -22,6 +23,8 @@ public class MeleeEnemy : BaseEnemy
 
     private void Update()
     {
+        base.Update();
+
         HandleStun();
         if (stunDuration > 0f) return;
 
@@ -65,8 +68,7 @@ public class MeleeEnemy : BaseEnemy
             case State.Chase:
                 if (!isStationary)
                 {
-                    Vector2 dir = (player.position - transform.position).normalized;
-                    rb.linearVelocity = new Vector2(dir.x * chaseSpeed, rb.linearVelocity.y);
+                    rb.linearVelocity = new Vector2(facingDir * chaseSpeed, rb.linearVelocity.y);
                 }
                 break;
 
@@ -79,6 +81,7 @@ public class MeleeEnemy : BaseEnemy
                     if (playerHealth != null)
                     {
                         Vector2 knockDir = (player.position - transform.position).normalized;
+                        AudioManager.Instance.PlaySFX(AudioManager.Instance.soundLibrary.meleeAttack, 0.8f);
                         playerHealth.TakeDamage(damageToPlayer, knockDir);
                     }
 

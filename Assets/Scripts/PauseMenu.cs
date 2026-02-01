@@ -11,13 +11,16 @@ public class PauseMenu : MonoBehaviour
     public GameObject pauseMenuUI;
     public GameObject settingsMenuUI;
 
+    [Header("How To Play")]
+    public GameObject howToPlayPanel;
+
     [Header("Audio Settings")]
     public AudioMixer masterMixer;
     public Slider masterSlider, musicSlider, sfxSlider;
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (pauseMenuUI != null && Input.GetKeyDown(KeyCode.Escape))
         {
             if (isPaused) Resume();
             else Pause();
@@ -37,6 +40,20 @@ public class PauseMenu : MonoBehaviour
         pauseMenuUI.SetActive(true);
         Time.timeScale = 0f;
         isPaused = true;
+    }
+
+    public void OpenHowToPlay()
+    {
+        if (pauseMenuUI != null) pauseMenuUI.SetActive(false);
+
+        howToPlayPanel.SetActive(true);
+    }
+
+    public void CloseHowToPlay()
+    {
+        howToPlayPanel.SetActive(false);
+
+        if (pauseMenuUI != null) pauseMenuUI.SetActive(true);
     }
 
     public void OpenSettings()

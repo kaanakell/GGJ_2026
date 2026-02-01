@@ -9,20 +9,23 @@ public abstract class BaseEnemy : MonoBehaviour
     [Header("General")]
     public float detectionRange = 10f;
     public LayerMask groundLayer;
+    public LayerMask wallLayer;
 
     [Header("Touch Damage")]
     public bool hasTouchDamage = true;
     public int touchDamageAmount = 1;
     private float touchTimer = 0f;
 
-    [Header("Patrol")]
+    [Header("Patrol Settings")]
     public bool patrols = true;
     public float patrolSpeed = 2f;
-    public float edgeCheckDistance = 0.3f;
-    public float wallCheckDistance = 0.5f;
+    public float edgeCheckDistance = 1.5f;
+    public float wallCheckDistance = 0.7f;
+    public Vector2 patrolRayOffset = new Vector2(0.5f, 0f);
 
     protected int facingDir = 1;
 
+    protected float flipCooldown = 0f;
     protected float stunDuration = 0f;
     protected float knockbackRecoveryTimer = 0f;
 
@@ -53,26 +56,33 @@ public abstract class BaseEnemy : MonoBehaviour
     protected virtual void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
+
+        facingDir = transform.localScale.x > 0 ? 1 : -1;
     }
 
-    private void Update()
+    protected virtual void Update()
     {
-        if (touchTimer > 0f)
-            touchTimer -= Time.deltaTime;
+        if (touchTimer > 0f) touchTimer -= Time.deltaTime;
+        if (flipCooldown > 0f) flipCooldown -= Time.deltaTime;
     }
 
     protected void Flip()
     {
+        if (flipCooldown > 0f) return;
+
         facingDir *= -1;
         transform.localScale = new Vector3(facingDir, transform.localScale.y, transform.localScale.z);
+
+        flipCooldown = 0.5f;
     }
 
     protected void FacePlayer()
     {
         if (player == null) return;
+
+        if (Mathf.Abs(player.position.x - transform.position.x) < 0.5f) return;
 
         if ((player.position.x > transform.position.x && facingDir == -1) ||
             (player.position.x < transform.position.x && facingDir == 1))
@@ -87,12 +97,18 @@ public abstract class BaseEnemy : MonoBehaviour
 
         rb.linearVelocity = new Vector2(facingDir * patrolSpeed, rb.linearVelocity.y);
 
-        Vector3 rayOrigin = transform.position + Vector3.right * facingDir * 0.2f;
-        RaycastHit2D groundAhead = Physics2D.Raycast(rayOrigin, Vector2.down, edgeCheckDistance, groundLayer);
-        RaycastHit2D wallHit = Physics2D.Raycast(transform.position, Vector2.right * facingDir, wallCheckDistance, groundLayer);
+        Vector2 sensorOrigin = (Vector2)transform.position + new Vector2(patrolRayOffset.x * facingDir, patrolRayOffset.y);
 
-        if (groundAhead.collider == null || wallHit.collider != null)
+        RaycastHit2D wallHit = Physics2D.Raycast(sensorOrigin, Vector2.right * facingDir, wallCheckDistance, wallLayer);
+
+        RaycastHit2D groundAhead = Physics2D.Raycast(sensorOrigin, Vector2.down, edgeCheckDistance, groundLayer);
+
+        Debug.DrawRay(sensorOrigin, Vector2.right * facingDir * wallCheckDistance, Color.red);
+        Debug.DrawRay(sensorOrigin, Vector2.down * edgeCheckDistance, Color.green);
+
+        if (wallHit.collider != null || groundAhead.collider == null)
         {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
             Flip();
         }
     }

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance;
     [Header("Health Bar")]
     public Slider healthSlider;
     public PlayerHealth playerHealth;
@@ -11,6 +12,15 @@ public class UIManager : MonoBehaviour
     public Image currentMaskIcon;
     public Sprite tentacleSprite;
     public Sprite clawSprite;
+
+    [Header("Panels")]
+    public GameObject gameOverPanel;
+    public GameObject levelCompletePanel;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -27,6 +37,26 @@ public class UIManager : MonoBehaviour
         {
             healthSlider.value = Mathf.Lerp(healthSlider.value, playerHealth.CurrentHealth, Time.deltaTime * 10f);
         }
+    }
+
+    public void ShowGameOver()
+    {
+        gameOverPanel.SetActive(true);
+    }
+
+    public void ShowLevelComplete()
+    {
+        levelCompletePanel.SetActive(true);
+    }
+
+    public void Restart()
+    {
+        GameStateManager.Instance.RestartLevel();
+    }
+
+    public void MainMenu()
+    {
+        GameStateManager.Instance.LoadMainMenu();
     }
 
     public void UpdateMaskIcon(MaskManager.MaskType activeMask)
